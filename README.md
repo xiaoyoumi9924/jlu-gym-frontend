@@ -10,14 +10,10 @@ http://47.114.47.118
 
 
 
-## 页面说明
-
 进入页面后，顶部 **Logo 同时作为隐藏的「预约设置」入口**，点击后可快速创建一条预约。
 
-
-
 <p align="center">
-  <img src="docs/images/venues-logo-entry.png" width="320">
+  <img src="docs/images/venues-logo-entry.png" width="420">
 </p>
 
 <p align="center">
@@ -25,8 +21,6 @@ http://47.114.47.118
 </p>
 
 保存预约后，进入 **「我的预约」** 模块即可查看预约结果。
-
-
 
 
 
