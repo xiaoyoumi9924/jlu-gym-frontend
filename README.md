@@ -27,6 +27,7 @@ http://47.114.47.118
 
 
 ## 本地运行
+该项目运行在我的服务器中，如果你想在本地部署运行，那么进入终端然后执行一下命令
 
 ```bash
 git clone https://github.com/xiaoyoumi9924/jlu-gym-frontend.git
