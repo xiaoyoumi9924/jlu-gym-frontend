@@ -14,13 +14,7 @@ http://47.114.47.118
 
 进入页面后，顶部 **Logo 同时作为隐藏的「预约设置」入口**，点击后可快速创建一条预约。
 
-可设置：
 
-- 体育馆
-- 体育项目
-- 预约日期
-- 时间段
-- 场地号
 
 <p align="center">
   <img src="docs/images/venues-logo-entry.png" width="320">
