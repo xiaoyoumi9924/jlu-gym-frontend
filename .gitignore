@@ -1,0 +1,7 @@
+.worktrees/
+.superpowers/
+node_modules/
+dist/
+reference-source/
+.DS_Store
+artifacts/screenshots/*.tmp.png

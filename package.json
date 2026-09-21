@@ -1,0 +1,22 @@
+{
+  "name": "jlu-gym-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "node --test tests/extraction.test.mjs tests/booking-feature.test.mjs && vitest run"
+  },
+  "dependencies": {
+    "vue": "latest",
+    "vue-router": "latest"
+  },
+  "devDependencies": {
+    "@vue/test-utils": "latest",
+    "@vitejs/plugin-vue": "latest",
+    "jsdom": "latest",
+    "vite": "latest",
+    "vitest": "latest"
+  }
+}
