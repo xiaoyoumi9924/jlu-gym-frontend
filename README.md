@@ -11,7 +11,7 @@
 
 ## 页面说明
 
-进入场馆选择页后，点击顶部 Logo 可以打开隐藏的“预约设置”入口。
+进入场馆选择页后，点击顶部 Logo 可以打开隐藏的“预约设置”入口。设置完成之后就能进入页面查看预约的结果了。
 
 <p align="center">
   <img src="docs/images/venues-logo-entry.png" width="420" alt="点击顶部 Logo 打开预约设置">
