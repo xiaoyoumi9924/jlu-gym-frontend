@@ -1,16 +1,24 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { getVenue } from '../data/venues'
-import { cancelMockBooking, getMockBooking } from '../data/mockBooking'
+import { cancelMockBooking, getMockBookings } from '../data/mockBooking'
 
 const router = useRouter()
-const booking = ref(getMockBooking())
-const venue = computed(() => booking.value ? getVenue(booking.value.venueId) : null)
-const sport = computed(() => venue.value?.sports.find((item) => item.name === booking.value?.sportName) ?? null)
+const bookings = ref(getMockBookings())
 
-function cancelBooking() {
-  booking.value = cancelMockBooking()
+function getSport(booking) {
+  return getVenue(booking.venueId).sports.find((item) => item.name === booking.sportName) ?? null
+}
+
+function cancelBooking(orderNo) {
+  const cancelled = cancelMockBooking(orderNo)
+  if (!cancelled) return
+  bookings.value = bookings.value.map((booking) => booking.orderNo === orderNo ? cancelled : booking)
+}
+
+function viewDetails(orderNo) {
+  router.push(`/my-bookings/detail/${orderNo}`)
 }
 </script>
 
@@ -25,7 +33,8 @@ function cancelBooking() {
       <span class="chevron" aria-hidden="true">〉</span>
     </button>
 
-    <section v-if="booking" class="order-card" data-booking-card>
+    <template v-if="bookings.length">
+    <section v-for="booking in bookings" :key="booking.orderNo" class="order-card" data-booking-card>
       <div class="order-head">
         <span>订单号：{{ booking.orderNo }}</span>
         <span v-if="booking.status === 'cancelled'" class="cancelled">已取消</span>
@@ -33,7 +42,7 @@ function cancelBooking() {
 
       <div class="order-body">
         <div class="sport-photo-wrap">
-          <img v-if="sport" class="sport-photo" :src="sport.image" :alt="booking.sportName">
+          <img v-if="getSport(booking)" class="sport-photo" :src="getSport(booking).image" :alt="booking.sportName">
           <div class="photo-bottom" aria-hidden="true"></div>
         </div>
 
@@ -42,12 +51,13 @@ function cancelBooking() {
           <p>数量： <em>{{ booking.quantity }}</em></p>
           <p>购买时间：{{ booking.purchaseTime }}</p>
           <div class="order-actions">
-            <button type="button" @click="router.push('/my-bookings/detail')">查看详情</button>
-            <button v-if="booking.status !== 'cancelled'" type="button" @click="cancelBooking">取消预约</button>
+            <button type="button" @click="viewDetails(booking.orderNo)">查看详情</button>
+            <button v-if="booking.status !== 'cancelled'" type="button" @click="cancelBooking(booking.orderNo)">取消预约</button>
           </div>
         </div>
       </div>
     </section>
+    </template>
 
     <section v-else class="empty-state">
       <img src="../assets/original/my-booking.png" alt="">
@@ -122,6 +132,10 @@ function cancelBooking() {
   padding: 13px 11px 18px;
   border-radius: 7px;
   background: #fff;
+}
+
+.order-card + .order-card {
+  margin-top: 14px;
 }
 
 .order-head {

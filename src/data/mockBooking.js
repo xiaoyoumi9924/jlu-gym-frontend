@@ -1,4 +1,5 @@
-const storageKey = 'jlu-gym-mock-booking'
+const storageKey = 'jlu-gym-mock-bookings'
+const legacyStorageKey = 'jlu-gym-mock-booking'
 
 export const timeSlots = [
   '06:00–07:30',
@@ -11,8 +12,54 @@ export const timeSlots = [
   '19:30–21:30',
 ]
 
-const getStorage = () => globalThis.sessionStorage
+const getStorage = () => globalThis.localStorage
 const two = (value) => String(value).padStart(2, '0')
+
+function isBookingRecord(value) {
+  if (!value || Array.isArray(value) || typeof value !== 'object') return false
+  const stringFields = [
+    'venueId',
+    'sportName',
+    'date',
+    'timeSlot',
+    'courtNumber',
+    'startTime',
+    'endTime',
+    'orderNo',
+    'purchaseTime',
+    'status',
+  ]
+  return stringFields.every((field) => typeof value[field] === 'string' && value[field])
+    && Number.isFinite(value.quantity)
+    && ['active', 'cancelled'].includes(value.status)
+}
+
+function parseBookingList(raw) {
+  if (raw === null) return null
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) && parsed.every(isBookingRecord) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+function migrateLegacyBooking() {
+  const legacyStorage = globalThis.sessionStorage
+  const raw = legacyStorage?.getItem(legacyStorageKey)
+  if (!raw) return []
+
+  try {
+    const booking = JSON.parse(raw)
+    if (!isBookingRecord(booking)) return []
+    const bookings = [booking]
+    getStorage().setItem(storageKey, JSON.stringify(bookings))
+    legacyStorage.removeItem(legacyStorageKey)
+    return bookings
+  } catch {
+    return []
+  }
+}
 
 function formatPurchaseTime(date = new Date()) {
   return `${date.getFullYear()}-${two(date.getMonth() + 1)}-${two(date.getDate())} ${two(date.getHours())}:${two(date.getMinutes())}`
@@ -48,29 +95,29 @@ export function saveMockBooking(input) {
     status: 'active',
   }
 
-  getStorage().setItem(storageKey, JSON.stringify(booking))
+  const bookings = getMockBookings()
+  getStorage().setItem(storageKey, JSON.stringify([...bookings, booking]))
   return booking
 }
 
-export function getMockBooking() {
+export function getMockBookings() {
   const raw = getStorage().getItem(storageKey)
-  if (!raw) return null
-
-  try {
-    return JSON.parse(raw)
-  } catch {
-    return null
-  }
+  const bookings = parseBookingList(raw)
+  return bookings === null ? migrateLegacyBooking() : bookings
 }
 
-export function cancelMockBooking() {
-  const booking = getMockBooking()
-  if (!booking) return null
-  const cancelled = { ...booking, status: 'cancelled' }
-  getStorage().setItem(storageKey, JSON.stringify(cancelled))
+export function getMockBooking(orderNo) {
+  if (!orderNo) return null
+  return getMockBookings().find((booking) => booking.orderNo === orderNo) ?? null
+}
+
+export function cancelMockBooking(orderNo) {
+  const bookings = getMockBookings()
+  const targetIndex = bookings.findIndex((booking) => booking.orderNo === orderNo)
+  if (targetIndex < 0) return null
+
+  const cancelled = { ...bookings[targetIndex], status: 'cancelled' }
+  const updated = bookings.map((booking, index) => index === targetIndex ? cancelled : booking)
+  getStorage().setItem(storageKey, JSON.stringify(updated))
   return cancelled
-}
-
-export function clearMockBooking() {
-  getStorage().removeItem(storageKey)
 }

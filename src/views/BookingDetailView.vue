@@ -1,13 +1,14 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { getVenue } from '../data/venues'
 import { getMockBooking } from '../data/mockBooking'
 import EntryCodeModal from '../components/EntryCodeModal.vue'
 import miniQr from '../assets/original/mini-entry-qr.png'
 
 const router = useRouter()
-const booking = ref(getMockBooking())
+const route = useRoute()
+const booking = computed(() => getMockBooking(String(route.params.orderNo ?? '')))
 const showEntryCode = ref(false)
 const venue = computed(() => booking.value ? getVenue(booking.value.venueId) : null)
 const sport = computed(() => venue.value?.sports.find((item) => item.name === booking.value?.sportName) ?? null)

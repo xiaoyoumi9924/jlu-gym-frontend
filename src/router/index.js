@@ -27,7 +27,7 @@ export const router = createRouter({
     { path: '/reserve/:venueId', component: ReservationView, props: true },
     { path: '/profile', component: ProfileView },
     { path: '/my-bookings', component: MyBookingsView },
-    { path: '/my-bookings/detail', component: BookingDetailView },
+    { path: '/my-bookings/detail/:orderNo', component: BookingDetailView },
     { path: '/:pathMatch(.*)*', redirect: '/venues' },
   ],
 })

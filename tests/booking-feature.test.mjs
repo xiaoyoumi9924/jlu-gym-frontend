@@ -4,36 +4,75 @@ import { existsSync, readFileSync } from 'node:fs'
 
 const modulePath = new URL('../src/data/mockBooking.js', import.meta.url)
 
+function createMemoryStorage(initial = {}) {
+  const memory = new Map(Object.entries(initial))
+  return {
+    getItem: (key) => memory.has(key) ? memory.get(key) : null,
+    setItem: (key, value) => memory.set(key, String(value)),
+    removeItem: (key) => memory.delete(key),
+    clear: () => memory.clear(),
+  }
+}
+
+function installMemoryStorage({ local = {}, session = {} } = {}) {
+  const originalLocal = Object.getOwnPropertyDescriptor(globalThis, 'localStorage')
+  const originalSession = Object.getOwnPropertyDescriptor(globalThis, 'sessionStorage')
+  Object.defineProperty(globalThis, 'localStorage', {
+    configurable: true,
+    value: createMemoryStorage(local),
+    writable: true,
+  })
+  Object.defineProperty(globalThis, 'sessionStorage', {
+    configurable: true,
+    value: createMemoryStorage(session),
+    writable: true,
+  })
+
+  return () => {
+    if (originalLocal) Object.defineProperty(globalThis, 'localStorage', originalLocal)
+    else delete globalThis.localStorage
+    if (originalSession) Object.defineProperty(globalThis, 'sessionStorage', originalSession)
+    else delete globalThis.sessionStorage
+  }
+}
+
 test('mock booking module exists', () => {
   assert.equal(existsSync(modulePath), true)
 })
 
-test('mock booking state saves one booking in sessionStorage', async () => {
-  const { saveMockBooking, getMockBooking, clearMockBooking, timeSlots } = await import(modulePath)
-  const original = globalThis.sessionStorage
-  const memory = new Map()
-  globalThis.sessionStorage = {
-    getItem: (key) => memory.has(key) ? memory.get(key) : null,
-    setItem: (key, value) => memory.set(key, String(value)),
-    removeItem: (key) => memory.delete(key),
-  }
-
+test('saving appointments appends every record to localStorage in insertion order', async () => {
+  const { saveMockBooking, getMockBookings, timeSlots } = await import(modulePath)
+  const restoreStorage = installMemoryStorage()
   try {
-    clearMockBooking()
-    const booking = saveMockBooking({
+    const first = saveMockBooking({
       venueId: 'qianwei',
       sportName: '羽毛球',
       date: '2026-09-22',
       timeSlot: '17:30–19:30',
       courtNumber: '4',
     })
+    saveMockBooking({
+      venueId: 'song',
+      sportName: '乒乓球',
+      date: '2026-09-23',
+      timeSlot: '07:30–10:00',
+      courtNumber: '8',
+    })
 
     assert.equal(timeSlots.includes('17:30–19:30'), true)
-    assert.deepEqual(getMockBooking(), booking)
-    assert.equal(booking.startTime, '17:30')
-    assert.equal(booking.endTime, '19:30')
+    assert.match(first.orderNo, /^0002\d{20,}$/)
+    assert.equal(first.quantity, 1)
+    assert.equal(first.status, 'active')
+    assert.match(first.purchaseTime, /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/)
+    assert.deepEqual(
+      getMockBookings().map(({ venueId, courtNumber, startTime, endTime }) => ({ venueId, courtNumber, startTime, endTime })),
+      [
+        { venueId: 'qianwei', courtNumber: '4', startTime: '17:30', endTime: '19:30' },
+        { venueId: 'song', courtNumber: '8', startTime: '07:30', endTime: '10:00' },
+      ],
+    )
   } finally {
-    globalThis.sessionStorage = original
+    restoreStorage()
   }
 })
 
@@ -55,36 +94,79 @@ test('router registers the my-bookings page', () => {
   assert.match(source, /path:\s*['"]\/my-bookings['"]/)
 })
 
-test('saved booking includes list metadata and can be cancelled', async () => {
-  const { saveMockBooking, getMockBooking, clearMockBooking, cancelMockBooking } = await import(modulePath)
-  const original = globalThis.sessionStorage
-  const memory = new Map()
-  globalThis.sessionStorage = {
-    getItem: (key) => memory.has(key) ? memory.get(key) : null,
-    setItem: (key, value) => memory.set(key, String(value)),
-    removeItem: (key) => memory.delete(key),
-  }
-
+test('cancelling by order number changes only the matching appointment', async () => {
+  const { saveMockBooking, getMockBookings, cancelMockBooking } = await import(modulePath)
+  const restoreStorage = installMemoryStorage()
   try {
-    clearMockBooking()
-    const booking = saveMockBooking({
+    const first = saveMockBooking({
       venueId: 'qianwei',
       sportName: '羽毛球',
       date: '2026-09-22',
       timeSlot: '07:30–10:00',
       courtNumber: '8',
     })
+    saveMockBooking({
+      venueId: 'song',
+      sportName: '羽毛球',
+      date: '2026-09-23',
+      timeSlot: '10:00–12:00',
+      courtNumber: '3',
+    })
 
-    assert.match(booking.orderNo, /^0002\d{20,}$/)
-    assert.equal(booking.quantity, 1)
-    assert.equal(booking.status, 'active')
-    assert.match(booking.purchaseTime, /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/)
-
-    const cancelled = cancelMockBooking()
+    const cancelled = cancelMockBooking(first.orderNo)
     assert.equal(cancelled.status, 'cancelled')
-    assert.equal(getMockBooking().status, 'cancelled')
+    assert.deepEqual(getMockBookings().map(({ courtNumber, status }) => ({ courtNumber, status })), [
+      { courtNumber: '8', status: 'cancelled' },
+      { courtNumber: '3', status: 'active' },
+    ])
   } finally {
-    globalThis.sessionStorage = original
+    restoreStorage()
+  }
+})
+
+test('invalid local booking data is treated as an empty collection', async () => {
+  const { getMockBookings } = await import(modulePath)
+  const restoreStorage = installMemoryStorage({
+    local: { 'jlu-gym-mock-bookings': '{broken json' },
+  })
+  try {
+    assert.deepEqual(getMockBookings(), [])
+    globalThis.localStorage.setItem('jlu-gym-mock-bookings', JSON.stringify({ orderNo: 'not-an-array' }))
+    assert.deepEqual(getMockBookings(), [])
+    globalThis.localStorage.setItem('jlu-gym-mock-bookings', JSON.stringify([null]))
+    assert.deepEqual(getMockBookings(), [])
+    globalThis.localStorage.setItem('jlu-gym-mock-bookings', JSON.stringify([{ orderNo: 'partial-record' }]))
+    assert.deepEqual(getMockBookings(), [])
+  } finally {
+    restoreStorage()
+  }
+})
+
+test('a legacy session booking migrates to localStorage only once', async () => {
+  const { getMockBookings } = await import(modulePath)
+  const legacy = {
+    venueId: 'qianwei',
+    sportName: '羽毛球',
+    date: '2026-09-22',
+    timeSlot: '17:30–19:30',
+    courtNumber: '4',
+    startTime: '17:30',
+    endTime: '19:30',
+    orderNo: '0002202609221200001234567890',
+    purchaseTime: '2026-09-22 12:00',
+    quantity: 1,
+    status: 'active',
+  }
+  const restoreStorage = installMemoryStorage({
+    session: { 'jlu-gym-mock-booking': JSON.stringify(legacy) },
+  })
+  try {
+    assert.deepEqual(getMockBookings(), [legacy])
+    assert.deepEqual(getMockBookings(), [legacy])
+    assert.deepEqual(JSON.parse(globalThis.localStorage.getItem('jlu-gym-mock-bookings')), [legacy])
+    assert.equal(globalThis.sessionStorage.getItem('jlu-gym-mock-booking'), null)
+  } finally {
+    restoreStorage()
   }
 })
 
@@ -101,7 +183,7 @@ test('my bookings page mirrors the real booking list structure', () => {
 test('booking detail and fixed entry-code modal are registered', () => {
   const routerSource = readFileSync(new URL('../src/router/index.js', import.meta.url), 'utf8')
   assert.match(routerSource, /BookingDetailView/)
-  assert.match(routerSource, /path:\s*['"]\/my-bookings\/detail['"]/)
+  assert.match(routerSource, /path:\s*['"]\/my-bookings\/detail\/:orderNo['"]/)
 
   const detailUrl = new URL('../src/views/BookingDetailView.vue', import.meta.url)
   const modalUrl = new URL('../src/components/EntryCodeModal.vue', import.meta.url)
