@@ -22,18 +22,34 @@
 
 保存预约后，可从“我的”进入“我的预约”，查看所有预约卡片。预约信息存储在本地浏览器中不会消失。
 
-## 本地运行
-该项目运行在我的服务器中，如果你想在本地部署运行，那么进入终端按照顺序执行以下命令
+## 一条命令运行
 
+打开终端，复制下面这一条命令回车即可。脚本会自动检查环境、下载项目、安装依赖、启动开发服务器并打开浏览器：
+
+**macOS / Linux**
 
 ```bash
-git clone https://github.com/xiaoyoumi9924/jlu-gym-frontend.git
-cd jlu-gym-frontend
-npm install
-npm run dev
+curl -fsSL https://raw.githubusercontent.com/xiaoyoumi9924/jlu-gym-frontend/main/scripts/quick-start.sh | bash
 ```
 
-开发服务器启动后，打开终端中显示的本地地址，通常为 `http://localhost:5173/`。
+**Windows（PowerShell）**
+
+```powershell
+irm https://raw.githubusercontent.com/xiaoyoumi9924/jlu-gym-frontend/main/scripts/quick-start.ps1 | iex
+```
+
+脚本只在第一次运行时下载项目到当前目录下的 `jlu-gym-frontend/` 并安装依赖（约 1–3 分钟）。以后再次运行会跳过这些步骤，几秒内打开页面。默认地址是 `http://localhost:5173/`，按 `Ctrl+C` 停止。
+
+> 如果 `raw.githubusercontent.com` 访问不了，可以把地址换成 jsDelivr 镜像：
+> `https://cdn.jsdelivr.net/gh/xiaoyoumi9924/jlu-gym-frontend@main/scripts/quick-start.sh`
+
+### 不想用脚本？
+
+```bash
+git clone --depth 1 https://github.com/xiaoyoumi9924/jlu-gym-frontend.git && cd jlu-gym-frontend && npm install && npm start
+```
+
+运行环境要求：Node.js 20.19+（或 22.12+）、Git。只想看效果的话，可以直接访问已部署的 [gym.meiyh9924.xyz](https://gym.meiyh9924.xyz/)。
 
 ## 说明文档
 

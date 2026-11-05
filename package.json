@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "start": "vite --open",
     "build": "vite build",
     "test": "node --test tests/extraction.test.mjs tests/booking-feature.test.mjs && vitest run"
   },
