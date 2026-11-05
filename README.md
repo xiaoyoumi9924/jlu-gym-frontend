@@ -48,8 +48,7 @@ npm install
 npm run dev
 ```
 
-开发服务器启动后，打开终端中显示的地址，通常是 <http://localhost:5173/>。想让浏览器自动打开，可以把最后一行换成 `npm start`。
-
+开发服务器启动后，打开终端中显示的地址，通常是 <http://localhost:5173/>。
 按 `Ctrl+C` 停止服务器；下次运行只需在项目目录执行 `npm run dev`。
 
 ## 说明文档
