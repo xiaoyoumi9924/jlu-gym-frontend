@@ -66,7 +66,25 @@ elif [ -e "$CLONE_DIR" ]; then
   die "目录 $CLONE_DIR 已存在但不是本项目。请换个目录：JLU_GYM_DIR=另一个目录名"
 else
   info "正在下载项目到 $(pwd)/$CLONE_DIR …"
-  git clone --depth 1 "$REPO_URL" "$CLONE_DIR" ||
+  clone_ok=0
+  for attempt in 1 2 3; do
+    if git clone --depth 1 "$REPO_URL" "$CLONE_DIR"; then
+      clone_ok=1
+      break
+    fi
+    rm -rf "$CLONE_DIR"
+    info "下载失败，正在重试（$attempt/3）…"
+    sleep 2
+  done
+  if [ "$clone_ok" -ne 1 ]; then
+    info "改用 HTTP/1.1 再试一次…"
+    if git -c http.version=HTTP/1.1 clone --depth 1 "$REPO_URL" "$CLONE_DIR"; then
+      clone_ok=1
+    else
+      rm -rf "$CLONE_DIR"
+    fi
+  fi
+  [ "$clone_ok" -eq 1 ] ||
     die "下载失败，请检查网络；也可以把 JLU_GYM_REPO_URL 换成镜像地址后重试。"
   TARGET="$CLONE_DIR"
 fi

@@ -60,8 +60,15 @@ if (Test-ProjectDir '.') {
   Die "目录 $CloneDir 已存在但不是本项目。请换个目录：`$env:JLU_GYM_DIR = '另一个目录名'"
 } else {
   Write-Info "正在下载项目到 $CloneDir …"
-  git clone --depth 1 $RepoUrl $CloneDir
-  if ($LASTEXITCODE -ne 0) { Die '下载失败，请检查网络；也可以把 JLU_GYM_REPO_URL 换成镜像地址后重试。' }
+  $cloneOk = $false
+  for ($attempt = 1; $attempt -le 3; $attempt++) {
+    git clone --depth 1 $RepoUrl $CloneDir
+    if ($LASTEXITCODE -eq 0) { $cloneOk = $true; break }
+    Remove-Item $CloneDir -Recurse -Force -ErrorAction SilentlyContinue
+    Write-Info "下载失败，正在重试（$attempt/3）…"
+    Start-Sleep -Seconds 2
+  }
+  if (-not $cloneOk) { Die '下载失败，请检查网络；也可以把 JLU_GYM_REPO_URL 换成镜像地址后重试。' }
   $Target = (Resolve-Path $CloneDir).Path
 }
 
