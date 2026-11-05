@@ -32,7 +32,7 @@
 curl -fsSL https://raw.githubusercontent.com/xiaoyoumi9924/jlu-gym-frontend/main/scripts/quick-start.sh | bash
 ```
 
-**Windows（PowerShell）**
+**Windows**
 
 ```powershell
 irm https://raw.githubusercontent.com/xiaoyoumi9924/jlu-gym-frontend/main/scripts/quick-start.ps1 | iex
