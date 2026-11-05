@@ -23,7 +23,8 @@
 保存预约后，可从“我的”进入“我的预约”，查看所有预约卡片。预约信息存储在本地浏览器中不会消失。
 
 ## 快速部署
-请先按照Node.js和git，然后在打开终端输入以下命令：
+
+先安装 [Node.js](https://nodejs.org/)和 [Git](https://git-scm.com/downloads)，然后在终端运行：
 
 **macOS / Linux**
 
@@ -36,6 +37,20 @@ curl -fsSL https://raw.githubusercontent.com/xiaoyoumi9924/jlu-gym-frontend/main
 ```powershell
 irm https://raw.githubusercontent.com/xiaoyoumi9924/jlu-gym-frontend/main/scripts/quick-start.ps1 | iex
 ```
+## 从源码运行
+
+先安装 [Node.js](https://nodejs.org/)和 [Git](https://git-scm.com/downloads)，然后在终端运行：
+
+```bash
+git clone --depth 1 https://github.com/xiaoyoumi9924/jlu-gym-frontend.git
+cd jlu-gym-frontend
+npm install
+npm run dev
+```
+
+开发服务器启动后，打开终端中显示的地址，通常是 <http://localhost:5173/>。想让浏览器自动打开，可以把最后一行换成 `npm start`。
+
+按 `Ctrl+C` 停止服务器；下次运行只需在项目目录执行 `npm run dev`。
 
 ## 说明文档
 
